@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name esp32devkitv1)(type Legacy)(uri ${KIPRJMOD}/esp32devkitv1.lib)(options "")(descr ""))
+  (lib (name ControlMotores-rescue)(type Legacy)(uri ${KIPRJMOD}/ControlMotores-rescue.lib)(options "")(descr ""))
+)
