@@ -316,12 +316,19 @@ void keypadEvent(KeypadEvent key)
   case PRESSED:
     if (key == '#')
     {
-      Serial.println("Event Presed #");
+      Serial.println("Event Presed # [START]");
+    }else if(key == '*')
+    {
+      Serial.println("Event Presed * [STOP]");
     }
     break;
 
   case RELEASED:
     if (key == '*')
+    {
+      Serial.println("Event Released *");
+    }
+    else if(key == '*')
     {
       Serial.println("Event Released *");
     }
