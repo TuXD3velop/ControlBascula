@@ -66,7 +66,7 @@ uint8_t contadorErrores = 0;
 //BluetoothSerial SerialBT;
 
 //Peso a comprar
-float pesoCompleto = 0;
+float pesoCompleto = 20;
 
 //Contador tambos
 int contadorTambos = 0;
@@ -152,9 +152,12 @@ void setup()
 ╚═╝╚═╝ ╩ ╚═╝╩    ╚═╝╚  ╚═╝
 */
 
+//! el guardado en NVS no funcoina
+/*
   cfg.begin("bascula", false);
   pesoCompleto = cfg.getFloat("peso_max", 120);
   contadorTambos = cfg.getInt("contador", 0);
+  */
 
   /*
 ╔═╗╔═╗╔╦╗╦ ╦╔═╗  ╦ ╦╦╔═╗╦
@@ -309,6 +312,17 @@ void loop(void)
 
 bool salirCfg = false;
 // Taking care of some special events.
+
+
+/*
+███████╗██╗   ██╗███████╗███╗   ██╗████████╗ ██████╗     ██╗  ██╗███████╗██╗   ██╗██████╗  █████╗ ██████╗
+██╔════╝██║   ██║██╔════╝████╗  ██║╚══██╔══╝██╔═══██╗    ██║ ██╔╝██╔════╝╚██╗ ██╔╝██╔══██╗██╔══██╗██╔══██╗
+█████╗  ██║   ██║█████╗  ██╔██╗ ██║   ██║   ██║   ██║    █████╔╝ █████╗   ╚████╔╝ ██████╔╝███████║██║  ██║
+██╔══╝  ╚██╗ ██╔╝██╔══╝  ██║╚██╗██║   ██║   ██║   ██║    ██╔═██╗ ██╔══╝    ╚██╔╝  ██╔═══╝ ██╔══██║██║  ██║
+███████╗ ╚████╔╝ ███████╗██║ ╚████║   ██║   ╚██████╔╝    ██║  ██╗███████╗   ██║   ██║     ██║  ██║██████╔╝
+╚══════╝  ╚═══╝  ╚══════╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝     ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝     ╚═╝  ╚═╝╚═════╝
+
+*/
 void keypadEvent(KeypadEvent key)
 {
   switch (keypad.getState())
@@ -351,9 +365,9 @@ void keypadEvent(KeypadEvent key)
     if (key == 'A')
     {
       salirCfg = false;
-      float peso = cfg.getFloat("peso_max", 0);
-      Serial.println(peso);
-      lcd.screenCfg(String(peso));
+      //float peso = cfg.getFloat("peso_max", 0);
+      Serial.println(pesoCompleto);
+      lcd.screenCfg(String(pesoCompleto));
       //Limpiando la matriz
       char pesoIngresado[] = {'\0', '\0', '\0', '\0', '\0', '\0'};
       uint8_t i = 0;
@@ -393,8 +407,9 @@ void keypadEvent(KeypadEvent key)
             float temp = buffer.toFloat();
             Serial.print("Nuevo Peso: ");
             Serial.println(temp);
-            cfg.putFloat("peso_max", temp);
-            pesoCompleto = cfg.getFloat("peso_max", 120);
+            //cfg.putFloat("peso_max", temp);
+            //pesoCompleto = cfg.getFloat("peso_max", 120);
+            pesoCompleto = temp;
 
             if (temp > 0)
             {
