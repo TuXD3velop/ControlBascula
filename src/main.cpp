@@ -331,11 +331,22 @@ bool salirCfg = false;
 ███████╗ ╚████╔╝ ███████╗██║ ╚████║   ██║   ╚██████╔╝    ██║  ██╗███████╗   ██║   ██║     ██║  ██║██████╔╝
 ╚══════╝  ╚═══╝  ╚══════╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝     ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝     ╚═╝  ╚═╝╚═════╝
 
+Definicion de teclas
+
+char keys[ROWS][COLS] = {
+    {'1', '2', '3', 'A'},
+    {'4', '5', '6', 'B'},
+    {'7', '8', '9', 'C'},
+    {'*', '0', '#', '.'}};
+
 */
 void keypadEvent(KeypadEvent key)
 {
   switch (keypad.getState())
   {
+
+/*
+  Eventos de presion de tecla desactivados
   case PRESSED:
     if (key == '#')
     {
@@ -345,15 +356,19 @@ void keypadEvent(KeypadEvent key)
       Serial.println("Event Presed * [STOP]");
     }
     break;
+*/
 
+//Evento Released key
   case RELEASED:
     if (key == '*')
     {
-      Serial.println("Event Released *");
+      Serial.println("Event Released * [START]");
+      motorEncendido = true;
     }
-    else if(key == '*')
+    else if(key == '#')
     {
-      Serial.println("Event Released *");
+      Serial.println("Event Released * [STOP]");
+      motorEncendido = false;
     }
     break;
 
@@ -369,7 +384,7 @@ void keypadEvent(KeypadEvent key)
     if (motor.getMotorState())
     {
       motor.parar();
-    }
+    } 
     //Hold A => "F4"
     if (key == 'A')
     {
