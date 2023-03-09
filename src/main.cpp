@@ -165,6 +165,7 @@ void setup()
 ╚═╝╚═╝ ╩ ╚═╝╩    ╚╩╝╩╚  ╩
 */
 
+  uint8_t contadorErroresWifi = 0;
   WiFi.begin(ssid, password);
   Serial.print(F("Conectando"));
 
@@ -172,6 +173,14 @@ void setup()
   {
     delay(500);
     Serial.print(".");
+    contadorErroresWifi++;
+    //Esperamos 2.5 segundos a que se complete la conexion
+    if(contadorErroresWifi >= 5){
+      Serial.print(F("Timeout coneccion wifi"));
+      break;
+    }
+
+    
   }
 
   Serial.println();
