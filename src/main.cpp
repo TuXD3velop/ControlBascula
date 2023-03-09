@@ -464,13 +464,17 @@ void keypadEvent(KeypadEvent key)
 ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝      ╚═════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚══════╝
 */
 
+long startTime = 0;
+const int timeDebounce = 80;
 /* Interrupcion externa, pin 34*/
 void IRAM_ATTR externISR()
 {
   /*Retardo antirrebote*/
-  cli();
-  //delay(100);
-  motorEncendido = true;
+  if(millis() - startTime > timeDebounce)
+  {
+    motorEncendido = true;
+    startTime = millis();
+  }
+  
 
-  sei();
 }
