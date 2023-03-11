@@ -249,8 +249,9 @@ void loop(void)
       Serial.print(" --> ");
       Serial.println(pesoCompleto);
       pesoAnterior = pesoActual;
-      lcd.setTextPeso(pesoActual, motor.getMotorState());
+      
     }
+    lcd.setTextPeso(pesoActual, motor.getMotorState());
 
     //Indicacion de encendido demotor
     if (motorEncendido)
@@ -272,7 +273,7 @@ void loop(void)
       lcd.setTextMotor("OFF");
       contadorTambos++;
       //cfg.putInt("contador", contadorTambos);
-      lcd.setTextConsole("Alimexa Network", "0.0.0.0", contadorTambos);
+      lcd.setTextConsole("Network", "0.0.0.0", contadorTambos);
       motorEstadoAnterior = false;
       Serial.print("Estado del motor: ");
       Serial.println(motor.getMotorState() ? "Encendido" : "Apagado");
@@ -368,7 +369,7 @@ void keypadEvent(KeypadEvent key)
     else if(key == '#')
     {
       Serial.println("Event Released * [STOP]");
-      motorEncendido = false;
+      
     }
     break;
 
