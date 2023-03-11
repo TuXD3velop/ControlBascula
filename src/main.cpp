@@ -23,7 +23,7 @@
 #include <string.h>
 #include <WiFi.h>
 //#include <BluetoothSerial.h>
-#include <Preferences.h>
+//#include <Preferences.h>
 #include <Keypad.h>
 
 
@@ -66,7 +66,7 @@ uint8_t contadorErrores = 0;
 //BluetoothSerial SerialBT;
 
 //Peso a comprar
-float pesoCompleto = 20;
+float pesoCompleto = 25;
 
 //Contador tambos
 int contadorTambos = 0;
@@ -93,7 +93,7 @@ LCD lcd = LCD();
 ╩╝╚╝╚═╝ ╩ ╩ ╩╝╚╝╚═╝╩╩ ╩  ╚═╝╚  ╚═╝
 */
 /* Configuracion */
-Preferences cfg;
+//Preferences cfg;
 
 /*
 ╦╔═╔═╗╦ ╦╔═╗╔═╗╔╦╗  ╔═╗╔═╗╔╗╔╔═╗╦╔═╗
@@ -271,7 +271,7 @@ void loop(void)
       lcd.seccionMotorBg(RED);
       lcd.setTextMotor("OFF");
       contadorTambos++;
-      cfg.putInt("contador", contadorTambos);
+      //cfg.putInt("contador", contadorTambos);
       lcd.setTextConsole("Alimexa Network", "0.0.0.0", contadorTambos);
       motorEstadoAnterior = false;
       Serial.print("Estado del motor: ");
@@ -306,7 +306,7 @@ void loop(void)
     Serial.println(key);
   }
 
-  delay(500);
+  delay(400);
 #endif
 }
 
@@ -448,7 +448,7 @@ void keypadEvent(KeypadEvent key)
             }
           }
         }
-        delay(100);
+        delay(80);
       } while (salirCfg == false);
     }
     break;
