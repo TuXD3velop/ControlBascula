@@ -20,6 +20,10 @@
 // modified by Jean-Marc Zingg to be an example for the SSD1283A library (from GxTFT library)
 // original source taken from https://github.com/Bodmer/TFT_HX8357
 
+
+
+//Boton externo sin interrupcion
+
 #include <string.h>
 #include <WiFi.h>
 //#include <BluetoothSerial.h>
@@ -34,6 +38,8 @@
 #define RXD2 16
 #define TXD2 17
 
+#define BOTON 34
+
 //#define BT_DEBUG
 
 /*
@@ -45,7 +51,7 @@
 ╚═════╝ ╚══════╝ ╚═════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚══════╝
 */
 
-void IRAM_ATTR externISR();
+
 
 void keypadEvent(KeypadEvent key);
 
@@ -63,6 +69,8 @@ bool motorEncendido = false;
 bool motorEstadoAnterior = false;
 float pesoAnterior = 0.0;
 uint8_t contadorErrores = 0;
+
+
 //BluetoothSerial SerialBT;
 
 //Peso a comprar
@@ -134,8 +142,7 @@ void setup()
   //Setup serial 2
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 
-  //Interrupcion externa
-  attachInterrupt(34, externISR, FALLING);
+
 
 #ifdef BT_DEBUG
   //Setup Bluetooth serial
@@ -187,6 +194,9 @@ void setup()
   Serial.print(F("Conectado a la red WiFi: "));
   Serial.println(WiFi.localIP());
 
+  //Boton externo
+  pinMode(BOTON, INPUT);
+
   /*
   ╔═╗╦  ╦╔═╗╔╗╔╔╦╗╔═╗  ╦╔═╔═╗╦ ╦╔═╗╔═╗╔╦╗
   ║╣ ╚╗╔╝║╣ ║║║ ║ ║ ║  ╠╩╗║╣ ╚╦╝╠═╝╠═╣ ║║
@@ -208,29 +218,12 @@ void setup()
 void loop(void)
 {
 
-#ifdef BT_DEBUG
-  //Testeo de relevadores, inicio y paro del motor
-  // Serial.println("Motor Encendido");
-  // SerialBT.println("Motor Encendido");
-  // lcd.seccionMotorBg(GREEN);
-  // lcd.setTextMotor("ON");
-  // motor.iniciar();
-  // delay(8000);
-  // Serial.println("Motor Apagado");
-  // SerialBT.println("Motor Apagado");
-  // lcd.seccionMotorBg(RED);
-  // lcd.setTextMotor("OFF");
-  // motor.parar();
-  // delay(8000);
-
-  //Estado del teclado
-  char key = keypad.getKey();
-
-  delay(200);
-
-#else
-
   float pesoActual = 0;
+
+  bool estadoBoton = digitalRead(BOTON);
+
+
+
   //Instancia de comandos para manejar la bascula
   CMD Bascula;
 
@@ -241,6 +234,15 @@ void loop(void)
     //Reseteo de contador de errores
     contadorErrores = 0;
     //Verificacion de peso
+
+  //Estado del boton externo
+  if(estadoBoton == LOW){
+    motorEncendido = true;
+    Serial.println(F("Boton detectado, Flag Motor encendido"));
+  }
+
+
+
     pesoActual = Bascula.getPeso();
     if (pesoActual != pesoAnterior)
     {
@@ -299,6 +301,8 @@ void loop(void)
     }
   }
 
+
+
   //Estado del teclado
   char key = keypad.getKey();
 
@@ -308,7 +312,7 @@ void loop(void)
   }
 
   delay(400);
-#endif
+
 }
 
 /*
@@ -456,26 +460,3 @@ void keypadEvent(KeypadEvent key)
   }
 }
 
-/*
-██╗███╗   ██╗████████╗███████╗██████╗ ██████╗ ██╗   ██╗██████╗  ██████╗██╗ ██████╗ ███╗   ██╗███████╗███████╗
-██║████╗  ██║╚══██╔══╝██╔════╝██╔══██╗██╔══██╗██║   ██║██╔══██╗██╔════╝██║██╔═══██╗████╗  ██║██╔════╝██╔════╝
-██║██╔██╗ ██║   ██║   █████╗  ██████╔╝██████╔╝██║   ██║██████╔╝██║     ██║██║   ██║██╔██╗ ██║█████╗  ███████╗
-██║██║╚██╗██║   ██║   ██╔══╝  ██╔══██╗██╔══██╗██║   ██║██╔═══╝ ██║     ██║██║   ██║██║╚██╗██║██╔══╝  ╚════██║
-██║██║ ╚████║   ██║   ███████╗██║  ██║██║  ██║╚██████╔╝██║     ╚██████╗██║╚██████╔╝██║ ╚████║███████╗███████║
-╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝      ╚═════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚══════╝
-*/
-
-long startTime = 0;
-const int timeDebounce = 80;
-/* Interrupcion externa, pin 34*/
-void IRAM_ATTR externISR()
-{
-  /*Retardo antirrebote*/
-  if(millis() - startTime > timeDebounce)
-  {
-    motorEncendido = true;
-    startTime = millis();
-  }
-  
-
-}
