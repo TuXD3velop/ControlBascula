@@ -241,9 +241,8 @@ void loop(void)
     Serial.println(F("Boton detectado, Flag Motor encendido"));
   }
 
-
-
     pesoActual = Bascula.getPeso();
+    
     if (pesoActual != pesoAnterior)
     {
       Serial.print("Peso: ");
