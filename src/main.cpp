@@ -84,9 +84,6 @@ void IRAM_ATTR onTimer()
   if(digitalRead(BOTON) == LOW){
     botonExterno = LOW;
   }
-  
-  Serial.println(F("T"));
-
   portEXIT_CRITICAL_ISR(&timerMux);
 }
 
@@ -156,7 +153,7 @@ void setup()
   // Setup Timer
   timer = timerBegin(0, 80, true);
   timerAttachInterrupt(timer, &onTimer, true);
-  timerAlarmWrite(timer, 100000, true);
+  timerAlarmWrite(timer, 200000, true);
   timerAlarmEnable(timer);
 
 #ifdef BT_DEBUG
@@ -289,6 +286,8 @@ void loop(void)
       motorEstadoAnterior = false;
       Serial.print("Estado del motor: ");
       Serial.println(motor.getMotorState() ? "Encendido" : "Apagado");
+      //Despues del apagado del motor se debe ejecutar un retardo para evitar conversiones erroneas
+      delay(1000);
     }
   }
   else if (resultadoCmd == -1)
