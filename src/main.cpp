@@ -20,40 +20,25 @@
 // modified by Jean-Marc Zingg to be an example for the SSD1283A library (from GxTFT library)
 // original source taken from https://github.com/Bodmer/TFT_HX8357
 
-
-
-//Boton externo sin interrupcion
+// Sondeo de boton externo con interrupcipon de timer
+// cada 50 ms
 
 #include <string.h>
 #include <WiFi.h>
-//#include <BluetoothSerial.h>
-//#include <Preferences.h>
+// #include <BluetoothSerial.h>
+// #include <Preferences.h>
 #include <Keypad.h>
-
 
 #include "motor/motor.h"
 #include "cmd/cmd.h"
 
-//Pins para serial2
+// Pins para serial2
 #define RXD2 16
 #define TXD2 17
 
 #define BOTON 34
 
-//#define BT_DEBUG
-
-/*
-██████╗ ███████╗ ██████╗██╗      █████╗ ██████╗  █████╗  ██████╗██╗ ██████╗ ███╗   ██╗███████╗███████╗
-██╔══██╗██╔════╝██╔════╝██║     ██╔══██╗██╔══██╗██╔══██╗██╔════╝██║██╔═══██╗████╗  ██║██╔════╝██╔════╝
-██║  ██║█████╗  ██║     ██║     ███████║██████╔╝███████║██║     ██║██║   ██║██╔██╗ ██║█████╗  ███████╗
-██║  ██║██╔══╝  ██║     ██║     ██╔══██║██╔══██╗██╔══██║██║     ██║██║   ██║██║╚██╗██║██╔══╝  ╚════██║
-██████╔╝███████╗╚██████╗███████╗██║  ██║██║  ██║██║  ██║╚██████╗██║╚██████╔╝██║ ╚████║███████╗███████║
-╚═════╝ ╚══════╝ ╚═════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚══════╝
-*/
-
-
-
-void keypadEvent(KeypadEvent key);
+// #define BT_DEBUG
 
 /*
  ██████╗ ██╗      ██████╗ ██████╗  █████╗ ██╗     ███████╗███████╗
@@ -64,20 +49,46 @@ void keypadEvent(KeypadEvent key);
  ╚═════╝ ╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝
 
 */
-//Control de encendido
+// Control de encendido
 bool motorEncendido = false;
 bool motorEstadoAnterior = false;
 float pesoAnterior = 0.0;
 uint8_t contadorErrores = 0;
+volatile bool botonExterno = 0;
 
+hw_timer_t *timer = NULL;
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+// BluetoothSerial SerialBT;
 
-//BluetoothSerial SerialBT;
-
-//Peso a comprar
+// Peso a comprar
 float pesoCompleto = 25;
 
-//Contador tambos
+// Contador tambos
 int contadorTambos = 0;
+
+/*
+██████╗ ███████╗ ██████╗██╗      █████╗ ██████╗  █████╗  ██████╗██╗ ██████╗ ███╗   ██╗███████╗███████╗
+██╔══██╗██╔════╝██╔════╝██║     ██╔══██╗██╔══██╗██╔══██╗██╔════╝██║██╔═══██╗████╗  ██║██╔════╝██╔════╝
+██║  ██║█████╗  ██║     ██║     ███████║██████╔╝███████║██║     ██║██║   ██║██╔██╗ ██║█████╗  ███████╗
+██║  ██║██╔══╝  ██║     ██║     ██╔══██║██╔══██╗██╔══██║██║     ██║██║   ██║██║╚██╗██║██╔══╝  ╚════██║
+██████╔╝███████╗╚██████╗███████╗██║  ██║██║  ██║██║  ██║╚██████╗██║╚██████╔╝██║ ╚████║███████╗███████║
+╚═════╝ ╚══════╝ ╚═════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚══════╝
+*/
+
+void keypadEvent(KeypadEvent key);
+
+void IRAM_ATTR onTimer()
+{
+  portENTER_CRITICAL_ISR(&timerMux);
+  // Codigo de la interrupcion
+  if(digitalRead(BOTON) == LOW){
+    botonExterno = LOW;
+  }
+  
+  Serial.println(F("T"));
+
+  portEXIT_CRITICAL_ISR(&timerMux);
+}
 
 /*
 ╦╔╗╔╔═╗╔╦╗╔═╗╔╗╔╔═╗╦╔═╗  ╔╦╗╔═╗╔╦╗╔═╗╦═╗
@@ -101,7 +112,7 @@ LCD lcd = LCD();
 ╩╝╚╝╚═╝ ╩ ╩ ╩╝╚╝╚═╝╩╩ ╩  ╚═╝╚  ╚═╝
 */
 /* Configuracion */
-//Preferences cfg;
+// Preferences cfg;
 
 /*
 ╦╔═╔═╗╦ ╦╔═╗╔═╗╔╦╗  ╔═╗╔═╗╔╗╔╔═╗╦╔═╗
@@ -109,15 +120,15 @@ LCD lcd = LCD();
 ╩ ╩╚═╝ ╩ ╩  ╩ ╩═╩╝  ╚═╝╚═╝╝╚╝╚  ╩╚═╝
 */
 /*Configuracion */
-const byte ROWS = 4; //four rows
-const byte COLS = 4; //three columns
+const byte ROWS = 4; // four rows
+const byte COLS = 4; // three columns
 char keys[ROWS][COLS] = {
     {'1', '2', '3', 'A'},
     {'4', '5', '6', 'B'},
     {'7', '8', '9', 'C'},
     {'*', '0', '#', '.'}};
-byte rowPins[ROWS] = {13, 12, 14, 25}; //connect to the row pinouts of the kpd
-byte colPins[COLS] = {33, 32, 22, 19}; //connect to the column pinouts of the kpd
+byte rowPins[ROWS] = {13, 12, 14, 25}; // connect to the row pinouts of the kpd
+byte colPins[COLS] = {33, 32, 22, 19}; // connect to the column pinouts of the kpd
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
 /*
@@ -139,13 +150,17 @@ void setup()
   Serial.println();
   Serial.println("setup");
 
-  //Setup serial 2
+  // Setup serial 2
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 
-
+  // Setup Timer
+  timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(timer, &onTimer, true);
+  timerAlarmWrite(timer, 100000, true);
+  timerAlarmEnable(timer);
 
 #ifdef BT_DEBUG
-  //Setup Bluetooth serial
+  // Setup Bluetooth serial
   SerialBT.begin("AlimexaC001");
   Serial.println("Setup SerialBT OK");
   Serial.println("Motor Estado inicial");
@@ -159,12 +174,12 @@ void setup()
 ╚═╝╚═╝ ╩ ╚═╝╩    ╚═╝╚  ╚═╝
 */
 
-//! el guardado en NVS no funcoina
-/*
-  cfg.begin("bascula", false);
-  pesoCompleto = cfg.getFloat("peso_max", 120);
-  contadorTambos = cfg.getInt("contador", 0);
-  */
+  //! el guardado en NVS no funcoina
+  /*
+    cfg.begin("bascula", false);
+    pesoCompleto = cfg.getFloat("peso_max", 120);
+    contadorTambos = cfg.getInt("contador", 0);
+    */
 
   /*
 ╔═╗╔═╗╔╦╗╦ ╦╔═╗  ╦ ╦╦╔═╗╦
@@ -181,20 +196,19 @@ void setup()
     delay(500);
     Serial.print(".");
     contadorErroresWifi++;
-    //Esperamos 2.5 segundos a que se complete la conexion
-    if(contadorErroresWifi >= 5){
+    // Esperamos 2.5 segundos a que se complete la conexion
+    if (contadorErroresWifi >= 5)
+    {
       Serial.print(F("Timeout coneccion wifi"));
       break;
     }
-
-    
   }
 
   Serial.println();
   Serial.print(F("Conectado a la red WiFi: "));
   Serial.println(WiFi.localIP());
 
-  //Boton externo
+  // Boton externo
   pinMode(BOTON, INPUT);
 
   /*
@@ -217,32 +231,30 @@ void setup()
 
 void loop(void)
 {
-
+  //Variable para el peso actual
   float pesoActual = 0;
 
-  bool estadoBoton = digitalRead(BOTON);
-
-
-
-  //Instancia de comandos para manejar la bascula
-  CMD Bascula;
-
-  //checamos si la respuesta del comando es valida
-  int resultadoCmd = Bascula.sendCommand();
-  if (resultadoCmd == 1)
+  //Sondeo del boton externo
+  if (botonExterno == LOW)
   {
-    //Reseteo de contador de errores
-    contadorErrores = 0;
-    //Verificacion de peso
-
-  //Estado del boton externo
-  if(estadoBoton == LOW){
     motorEncendido = true;
+    botonExterno = true;
     Serial.println(F("Boton detectado, Flag Motor encendido"));
   }
 
-    pesoActual = Bascula.getPeso();
+  // Instancia de comandos para manejar la bascula
+  CMD Bascula;
+
+  // checamos si la respuesta del comando es valida
+  int resultadoCmd = Bascula.sendCommand();
+  if (resultadoCmd == 1)
+  {
+    // Reseteo de contador de errores
+    contadorErrores = 0;
     
+    // Verificacion de peso
+    pesoActual = Bascula.getPeso();
+
     if (pesoActual != pesoAnterior)
     {
       Serial.print("Peso: ");
@@ -250,14 +262,13 @@ void loop(void)
       Serial.print(" --> ");
       Serial.println(pesoCompleto);
       pesoAnterior = pesoActual;
-      
     }
     lcd.setTextPeso(pesoActual, motor.getMotorState());
 
-    //Indicacion de encendido demotor
+    // Indicacion de encendido demotor
     if (motorEncendido)
     {
-      //Iniciar el motor
+      // Iniciar el motor
       motor.iniciar();
       lcd.seccionMotorBg(GREEN);
       lcd.setTextMotor("ON");
@@ -266,14 +277,14 @@ void loop(void)
       Serial.println(motor.getMotorState() ? "Encendido" : "Apagado");
     }
 
-    //LLenado en proceso
+    // LLenado en proceso
     if ((motor.getMotorState()) && (pesoActual >= pesoCompleto))
     {
       motor.parar();
       lcd.seccionMotorBg(RED);
       lcd.setTextMotor("OFF");
       contadorTambos++;
-      //cfg.putInt("contador", contadorTambos);
+      // cfg.putInt("contador", contadorTambos);
       lcd.setTextConsole("Network", "0.0.0.0", contadorTambos);
       motorEstadoAnterior = false;
       Serial.print("Estado del motor: ");
@@ -300,9 +311,7 @@ void loop(void)
     }
   }
 
-
-
-  //Estado del teclado
+  // Estado del teclado
   char key = keypad.getKey();
 
   if (key)
@@ -311,7 +320,6 @@ void loop(void)
   }
 
   delay(400);
-
 }
 
 /*
@@ -325,7 +333,6 @@ void loop(void)
 
 bool salirCfg = false;
 // Taking care of some special events.
-
 
 /*
 ███████╗██╗   ██╗███████╗███╗   ██╗████████╗ ██████╗     ██╗  ██╗███████╗██╗   ██╗██████╗  █████╗ ██████╗
@@ -349,30 +356,29 @@ void keypadEvent(KeypadEvent key)
   switch (keypad.getState())
   {
 
-/*
-  Eventos de presion de tecla desactivados
-  case PRESSED:
-    if (key == '#')
-    {
-      Serial.println("Event Presed # [START]");
-    }else if(key == '*')
-    {
-      Serial.println("Event Presed * [STOP]");
-    }
-    break;
-*/
+    /*
+      Eventos de presion de tecla desactivados
+      case PRESSED:
+        if (key == '#')
+        {
+          Serial.println("Event Presed # [START]");
+        }else if(key == '*')
+        {
+          Serial.println("Event Presed * [STOP]");
+        }
+        break;
+    */
 
-//Evento Released key
+    // Evento Released key
   case RELEASED:
     if (key == '*')
     {
       Serial.println("Event Released * [START]");
       motorEncendido = true;
     }
-    else if(key == '#')
+    else if (key == '#')
     {
       Serial.println("Event Released * [STOP]");
-      
     }
     break;
 
@@ -384,19 +390,19 @@ void keypadEvent(KeypadEvent key)
     //   lcd.clearNuevoPeso();
     // }
 
-    //Apagar el motor al entar a la configuracion
+    // Apagar el motor al entar a la configuracion
     if (motor.getMotorState())
     {
       motor.parar();
-    } 
-    //Hold A => "F4"
+    }
+    // Hold A => "F4"
     if (key == 'A')
     {
       salirCfg = false;
-      //float peso = cfg.getFloat("peso_max", 0);
+      // float peso = cfg.getFloat("peso_max", 0);
       Serial.println(pesoCompleto);
       lcd.screenCfg(String(pesoCompleto));
-      //Limpiando la matriz
+      // Limpiando la matriz
       char pesoIngresado[] = {'\0', '\0', '\0', '\0', '\0', '\0'};
       uint8_t i = 0;
       /* Esperamos el ingreso del nuevo peso*/
@@ -405,12 +411,12 @@ void keypadEvent(KeypadEvent key)
         char key = keypad.getKey();
         if (key)
         {
-          //Limitamos la entrada a los digitos, start y stop
+          // Limitamos la entrada a los digitos, start y stop
           if (key >= 46 && key <= 57)
           {
             pesoIngresado[i] = key;
             lcd.setNuevoPeso(pesoIngresado);
-            //Serial.println(key);
+            // Serial.println(key);
             Serial.println(pesoIngresado);
             i++;
           }
@@ -435,8 +441,8 @@ void keypadEvent(KeypadEvent key)
             float temp = buffer.toFloat();
             Serial.print("Nuevo Peso: ");
             Serial.println(temp);
-            //cfg.putFloat("peso_max", temp);
-            //pesoCompleto = cfg.getFloat("peso_max", 120);
+            // cfg.putFloat("peso_max", temp);
+            // pesoCompleto = cfg.getFloat("peso_max", 120);
             pesoCompleto = temp;
 
             if (temp > 0)
@@ -458,4 +464,3 @@ void keypadEvent(KeypadEvent key)
     break;
   }
 }
-
