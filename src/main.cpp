@@ -54,7 +54,7 @@ bool motorEncendido = false;
 bool motorEstadoAnterior = false;
 float pesoAnterior = 0.0;
 uint8_t contadorErrores = 0;
-volatile bool botonExterno = 0;
+volatile bool botonExterno = HIGH;
 
 hw_timer_t *timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
@@ -150,20 +150,9 @@ void setup()
   // Setup serial 2
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 
-  // Setup Timer
-  timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(timer, &onTimer, true);
-  timerAlarmWrite(timer, 200000, true);
-  timerAlarmEnable(timer);
 
-#ifdef BT_DEBUG
-  // Setup Bluetooth serial
-  SerialBT.begin("AlimexaC001");
-  Serial.println("Setup SerialBT OK");
-  Serial.println("Motor Estado inicial");
-  SerialBT.println("Motor Estado inicial");
-  delay(8000);
-#endif
+
+
 
   /*
 ╔═╗╔═╗╔╦╗╦ ╦╔═╗  ╔═╗╔═╗╔═╗
@@ -215,6 +204,12 @@ void setup()
   */
 
   keypad.addEventListener(keypadEvent); // Add an event listener for this keypad
+
+    // Setup Timer
+  timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(timer, &onTimer, true);
+  timerAlarmWrite(timer, 200000, true);
+  timerAlarmEnable(timer);
 }
 
 /*
